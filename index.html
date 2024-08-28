@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>반거울과 거울 다중 반사 시뮬레이션</title>
+    <style>
+        canvas { border: 1px solid black; }
+    </style>
+</head>
+<body>
+    <canvas id="mirrorCanvas" width="800" height="600"></canvas>
+    <br>
+    <input type="range" id="angleSlider" min="-80" max="80" value="0">
+    <span id="angleValue">0°</span>
+    <script>
+        const canvas = document.getElementById('mirrorCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('angleSlider');
+        const angleValue = document.getElementById('angleValue');
+        let initialAngle = 0;
+
+        function drawSimulation() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 반거울 그리기 (왼쪽)
+            ctx.beginPath();
+            ctx.moveTo(200, 0);
+            ctx.lineTo(200, 600);
+            ctx.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 거울 그리기 (오른쪽)
+            ctx.beginPath();
+            ctx.moveTo(600, 0);
+            ctx.lineTo(600, 600);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 광원 그리기
+            ctx.beginPath();
+            ctx.arc(400, 500, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = 'yellow';
+            ctx.fill();
+
+            // 빛의 경로 그리기
+            let x = 400;
+            let y = 500;
+            let angle = -initialAngle;  // 초기 각도를 반사 각도로 설정
+            let reflectionCount = 0;
+
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+
+            while (reflectionCount < 20) {
+                let dx = Math.cos(angle * Math.PI / 180);
+                let dy = Math.sin(angle * Math.PI / 180);
+                
+                let t1 = (200 - x) / dx;
+                let t2 = (600 - x) / dx;
+                let t = (dx > 0) ? t2 : t1;
+
+                let nextX = x + dx * t;
+                let nextY = y + dy * t;
+
+                if (nextY < 0 || nextY > 600) {
+                    break;
+                }
+
+                ctx.lineTo(nextX, nextY);
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+                ctx.stroke();
+
+                if (Math.abs(nextX - 200) < 0.1) {
+                    // 반거울에서의 투과
+                    ctx.beginPath();
+                    ctx.moveTo(nextX, nextY);
+                    ctx.lineTo(0, nextY - 200 * Math.tan(angle * Math.PI / 180));
+                    ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+                    ctx.stroke();
+                }
+
+                // 반사각 계산
+                angle = 180 - angle;
+
+                ctx.beginPath();
+                ctx.moveTo(nextX, nextY);
+
+                x = nextX;
+                y = nextY;
+                reflectionCount++;
+            }
+
+            // 텍스트 추가
+            ctx.fillStyle = 'black';
+            ctx.font = '16px Arial';
+            ctx.fillText('반거울', 180, 20);
+            ctx.fillText('거울', 590, 20);
+        }
+
+        slider.oninput = function() {
+            initialAngle = Number(this.value);
+            angleValue.textContent = initialAngle + '°';
+            drawSimulation();
+        }
+
+        drawSimulation();
+    </script>
+</body>
+</html>
